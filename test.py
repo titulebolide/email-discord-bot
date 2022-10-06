@@ -6,6 +6,7 @@ import config
 
 def get_latest_mails():
     with MailBox(config.MAIL_HOST).login(config.MAIL_USER, config.MAIL_PASSWORD, config.MAIL_FOLDER) as mailbox:
-        return list(
-            mailbox.fetch(AND(date_gte=(datetime.datetime.now() - datetime.timedelta(days=3)).date()))
-        )
+        return list(mailbox.fetch(AND(
+            config.IMAP_TOOLS_FILTER,
+            date_gte=(datetime.datetime.now() - datetime.timedelta(days=3)).date()
+        )))
