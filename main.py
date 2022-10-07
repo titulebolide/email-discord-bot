@@ -40,6 +40,7 @@ class MailBoxHandler():
         if not self.running:
             logging.error("Was not running")
             return
+        self.mailbox.idle.wait(timeout=0)
         for msg in self.mailbox.fetch(
             AND(
                 config.IMAP_TOOLS_FILTER,
