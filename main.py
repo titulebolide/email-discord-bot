@@ -1,5 +1,5 @@
 import time, socket, imaplib
-from imap_tools import AND, NOT, MailBox, MailboxLoginError, MailboxLogoutError
+from imap_tools import AND, NOT, MailBox, MailboxLoginError, MailboxLogoutError, MailboxTaggedResponseError
 import datetime
 import logging
 import config
@@ -9,14 +9,19 @@ logging.basicConfig(level=logging.DEBUG)
 
 class MailBoxHandler():
     def __init__(self, host, user, passwd, folder, filter):
+        self.host = host
+        self.user = user
+        self.passwd = passwd
+        self.folder = folder
+        self.filter = filter
+        
         self.mailbox = MailBox(host)
-        self.mailbox.login(user, passwd, folder)
+        self.connect()
         self.poll_from_date = None
         self.already_seen_in_poll_period = []
         self.running = False
-        self.filter = filter
 
-    def start_polling(self):
+    def start_polling(self, prefill_data=None):
         if self.running:
             logging.warning("Already running")
             return
@@ -33,6 +38,10 @@ class MailBoxHandler():
         self.poll_from_date = None
         self.already_seen_in_poll_period = []
 
+    def connect(self):
+        logging.info("(Re)connecting...")
+        self.mailbox.login(self.user, self.passwd, self.folder)
+
     def poll(self):
         res = []
         future_poll_from_date = datetime.datetime.now().date()
@@ -40,7 +49,10 @@ class MailBoxHandler():
         if not self.running:
             logging.error("Was not running")
             return
-        self.mailbox.idle.wait(timeout=0)
+        try:
+            self.mailbox.idle.wait(timeout=0)
+        except MailboxTaggedResponseError: #session expiration
+            self.connect()
         for msg in self.mailbox.fetch(
             AND(
                 config.IMAP_TOOLS_FILTER,
