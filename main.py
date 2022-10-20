@@ -15,7 +15,7 @@ class MailBoxHandler():
         self.folder = folder
         self.filter = filter
         
-        self.mailbox = MailBox(host)
+        self.mailbox = None
         self.connect()
         self.poll_from_date = None
         self.already_seen_in_poll_period = []
@@ -38,11 +38,18 @@ class MailBoxHandler():
         self.poll_from_date = None
         self.already_seen_in_poll_period = []
 
+    def disconnect(self):
+        self.mailbox.logout()
+        self.mailbox = None
+
     def connect(self):
         logging.info("(Re)connecting...")
+        self.mailbox = MailBox(self.host)
         self.mailbox.login(self.user, self.passwd, self.folder)
 
     def poll(self):
+        if self.mailbox is None:
+            raise SystemError("Call connect method before polling")
         res = []
         future_poll_from_date = datetime.datetime.now().date()
         to_add_to_already_seen = []
@@ -52,6 +59,7 @@ class MailBoxHandler():
         try:
             self.mailbox.idle.wait(timeout=0)
         except MailboxTaggedResponseError: #session expiration
+            self.disconnect()
             self.connect()
         for msg in self.mailbox.fetch(
             AND(
