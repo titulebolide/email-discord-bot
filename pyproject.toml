@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "email_to_discord"
+version = "0.0.1"
+dependencies = ["imap_tools"]
+
+[project.scripts]
+email-to-discord = "email_to_discord.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["email_to_discord"]

@@ -2,3 +2,5 @@ config.py
 __pycache__/
 *.pyc
 nohup.out
+venv/
+email-to-discord.conf
